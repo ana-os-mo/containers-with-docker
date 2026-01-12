@@ -1,9 +1,14 @@
-# commands
+# Docker Commands
 
-# create docker network
+## Create Docker Network
+
+```bash
 docker network create mongo-network
+```
 
-## start mongodb
+## Start MongoDB
+
+```bash
 docker run -d \
 -p 27017:27017 \
 -e MONGO_INITDB_ROOT_USERNAME=admin \
@@ -11,8 +16,11 @@ docker run -d \
 --net mongo-network \
 --name mongodb \
 mongo
+```
 
-## start mongo-express
+## Start Mongo Express
+
+```bash
 docker run -d \
 -p 8081:8081 \
 -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin \
@@ -21,3 +29,4 @@ docker run -d \
 --net mongo-network \
 --name mongo-express \
 mongo-express
+```

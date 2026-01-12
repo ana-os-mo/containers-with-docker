@@ -1,20 +1,17 @@
-var express = require('express');
-var path = require('path');
-var fs = require('fs');
-var app = express();
+import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, "index.html"));
-  });
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.get('/profile-picture', function (req, res) {
-  let img = fs.readFileSync(path.join(__dirname, "images/profile-1.jpg"));
-  res.writeHead(200, {'Content-Type': 'image/jpg' });
-  res.end(img, 'binary');
-});
+app.use(express.static(path.join(__dirname, 'src')));
 
+app.use(express.json());
 
-app.listen(3000, function () {
-  console.log("app listening on port 3000!");
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
