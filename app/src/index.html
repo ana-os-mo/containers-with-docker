@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <main class="profile-card">
+    <header class="profile-header">
+      <img src="https://placehold.co/300x300" alt="User avatar" class="profile-img">
+      <h1>User Profile</h1>
+    </header>
+
+    <form id="profile-form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="Anna Smith" disabled required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="anna.smith@example.com" disabled required>
+      </div>
+
+      <div class="form-group">
+        <label for="interests">Interests</label>
+        <input type="text" id="interests" name="interests" value="Coding, Design" disabled>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="edit-btn" class="btn btn-primary">Edit Profile</button>
+        <button type="submit" id="save-btn" class="btn btn-success" hidden>Save Changes</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
