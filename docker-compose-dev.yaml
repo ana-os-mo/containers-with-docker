@@ -1,0 +1,110 @@
+# ==============================================================================
+# Docker Compose Configuration for Development Environment
+# ==============================================================================
+# This file defines the services needed for local development:
+# - MongoDB: The database
+# - Mongo Express: A web-based MongoDB admin interface
+#
+# To start all services: docker compose -f docker-compose-dev.yaml up -d
+# To stop all services: docker compose -f docker-compose-dev.yaml down
+# ==============================================================================
+
+# Define the services (containers) that make up this application
+services:
+
+  # ==============================================================================
+  # MongoDB Service
+  # ==============================================================================
+  # This service runs the MongoDB database in a container.
+  mongodb:
+
+    # Use the official MongoDB 7.0 image from Docker Hub
+    # Format: image-name:version-tag
+    image: mongo:7.0
+
+    # Map port 27017 on the host machine to port 27017 in the container.
+    # Format: host-port:container-port
+    # This allows you to connect to MongoDB from your host machine using localhost:27017
+    ports:
+      - 27017:27017
+
+    # Set environment variables for the MongoDB container.
+    # These variables are used by the MongoDB image to configure the database.
+    environment:
+      # Create a root user with username "mongo_dev_user" when MongoDB starts.
+      # This user has full administrative privileges on all databases.
+      - MONGO_INITDB_ROOT_USERNAME=mongo_dev_user
+
+      # Set the password for the root user to "mongo_dev_password".
+      # WARNING: In production, never use simple passwords or hardcode credentials.
+      # Use Docker secrets, environment files (.env), or secret managers instead.
+      - MONGO_INITDB_ROOT_PASSWORD=mongo_dev_password
+
+  # ==============================================================================
+  # Mongo Express Service
+  # ==============================================================================
+  # This service provides a web-based UI to interact with MongoDB.
+  # It's useful for viewing and managing database content during development.
+  mongo-express:
+    # Use the official Mongo Express 1.0.2 image from Docker Hub
+    image: mongo-express:1.0.2
+
+    # Restart policy: "always" means Docker will automatically restart this
+    # container if it stops for any reason (crash, manual stop, system reboot).
+    # Other options: "no", "on-failure", "unless-stopped"
+    restart: always
+
+    # Map port 8082 on the host to port 8081 in the container.
+    # Mongo Express runs on port 8081 by default inside the container.
+    # Access it in your browser at http://localhost:8082
+    ports:
+      - 8082:8081
+
+    # Environment variables to configure Mongo Express
+    environment:
+
+      # MongoDB admin username - must match the MongoDB root username above.
+      # Mongo Express uses these credentials to connect to MongoDB.
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongo_dev_user
+
+      # MongoDB admin password - must match the MongoDB root password above.
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongo_dev_password
+
+      # Basic authentication username for accessing the Mongo Express web interface.
+      # When you open http://localhost:8082, you'll be prompted for these credentials.
+      - ME_CONFIG_BASICAUTH_USERNAME=express-dev-user
+
+      # Basic authentication password for the Mongo Express web interface.
+      - ME_CONFIG_BASICAUTH_PASSWORD=express-dev-pass
+
+      # The hostname of the MongoDB server to connect to.
+      # Since both containers are in the same Docker Compose network, they can
+      # communicate using service names. "mongodb" refers to the service above.
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+
+      # The full MongoDB connection URL.
+      # Format: mongodb://hostname:port
+      # "mongodb" is the service name, and it resolves to the MongoDB container's IP.
+      # Port 27017 is MongoDB's default port inside the container.
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
+
+    # Ensure MongoDB starts before Mongo Express.
+    # depends_on controls the startup order but doesn't wait for MongoDB to be
+    # fully ready to accept connections. For that, you'd need health checks.
+    depends_on:
+      - mongodb
+
+# ==============================================================================
+# Notes
+# ==============================================================================
+# 1. Docker Compose automatically creates a default network for all services
+#    defined in this file. This allows services to communicate using their
+#    service names (e.g., "mongodb") as hostnames.
+#
+# 2. No volumes are defined in this dev configuration, so MongoDB data will be
+#    lost when you run "docker compose down". This is fine for development.
+#    For data persistence, see docker-compose-prod.yaml.
+#
+# 3. Both services use default bridge networking, which isolates them from
+#    other Docker containers not defined in this file.
+# ==============================================================================
