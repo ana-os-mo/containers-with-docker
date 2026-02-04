@@ -1,0 +1,163 @@
+# ==============================================================================
+# Docker Compose Configuration for Production Environment
+# ==============================================================================
+# This file defines the services needed for production deployment:
+# - node-app: The containerized Node.js application
+# - MongoDB: The database
+# - Mongo Express: A web-based MongoDB admin interface (optional in production)
+#
+# To start all services: docker compose -f docker-compose-prod.yaml up -d
+# To stop all services: docker compose -f docker-compose-prod.yaml down
+# To stop and remove volumes: docker compose -f docker-compose-prod.yaml down -v
+# ==============================================================================
+
+# Define the services (containers) that make up this application
+services:
+
+  # ==============================================================================
+  # Node.js Application Service
+  # ==============================================================================
+  # This service runs your custom Node.js application.
+  node-app:
+    # The Docker image for your application, stored in your private Nexus registry.
+    # Format: registry-url/image-name:version-tag
+    # Replace 34.23.223.36:8083 with your actual Nexus server IP and Docker port.
+    image: 34.23.223.36:8083/node-app:1.0.0
+
+    # Map port 3000 on the host to port 3000 in the container.
+    # This makes your Node.js app accessible at http://<server-ip>:3000
+    ports:
+      - 3000:3000
+
+    # Environment variables for the Node.js application.
+    # These are accessed in your code with process.env.MONGO_USER, etc.
+    environment:
+      # MongoDB username that the Node.js app uses to connect to the database.
+      # Must match the MongoDB root username defined below.
+      - MONGO_USER=mongoProdUser
+
+      # MongoDB password for authentication.
+      # Must match the MongoDB root password defined below.
+      - MONGO_PASSWORD=mongoProdPass543
+
+      # The hostname of the MongoDB server.
+      # Since containers are in the same Docker Compose network, use the service name.
+      # "mongodb" resolves to the IP address of the MongoDB container.
+      - MONGO_HOST=mongodb
+
+    # Ensure MongoDB starts before the Node.js application.
+    # The app depends on MongoDB being available to connect to the database.
+    # Note: depends_on only controls startup order, not readiness.
+    depends_on:
+      - mongodb
+
+  # ==============================================================================
+  # MongoDB Service
+  # ==============================================================================
+  # This service runs the MongoDB database in a container.
+  mongodb:
+    # Use the official MongoDB 7.0 image from Docker Hub
+    image: mongo:7.0
+
+    # Map port 27017 on the host to port 27017 in the container.
+    # This allows external connections to MongoDB (e.g., from your local machine).
+    # In production, you might want to restrict this port to internal access only.
+    ports:
+      - 27017:27017
+
+    # Environment variables to configure MongoDB
+    environment:
+      # Create a root user with username "mongoProdUser" when MongoDB starts.
+      # This user has full administrative privileges on all databases.
+      - MONGO_INITDB_ROOT_USERNAME=mongoProdUser
+
+      # Set the password for the root user.
+      # WARNING: In production, use Docker secrets or environment files instead
+      # of hardcoding credentials. This is for demonstration purposes only.
+      - MONGO_INITDB_ROOT_PASSWORD=mongoProdPass543
+
+    # VOLUME CONFIGURATION (uncomment to persist data)
+    # Volumes allow data to persist even when containers are stopped or removed.
+    # Without volumes, all database data is lost when the container is deleted.
+    # Uncomment the following lines to enable data persistence:
+    # volumes:
+    #  - mongodb-data:/data/db
+
+  # ==============================================================================
+  # Mongo Express Service
+  # ==============================================================================
+  # This service provides a web-based UI to interact with MongoDB.
+  # In production, you might want to remove this service or restrict access.
+  mongo-express:
+    # Use the official Mongo Express 1.0.2 image from Docker Hub
+    image: mongo-express:1.0.2
+
+    # Restart policy: always restart this container if it stops
+    restart: always
+
+    # Map port 8082 on the host to port 8081 in the container.
+    # Access Mongo Express at http://<server-ip>:8082
+    ports:
+      - 8082:8081
+
+    # Environment variables to configure Mongo Express
+    environment:
+      # MongoDB admin username - must match the MongoDB root username above.
+      # Mongo Express uses these credentials to connect to MongoDB.
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongoProdUser
+
+      # MongoDB admin password - must match the MongoDB root password above.
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongoProdPass543
+
+      # Basic authentication username for the Mongo Express web interface.
+      # Users must provide these credentials to access the UI.
+      - ME_CONFIG_BASICAUTH_USERNAME=expressUser
+
+      # Basic authentication password for the Mongo Express web interface.
+      - ME_CONFIG_BASICAUTH_PASSWORD=expressPass963
+
+      # The hostname of the MongoDB server to connect to.
+      # "mongodb" is the service name and resolves to the MongoDB container's IP.
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+
+      # The full MongoDB connection URL.
+      # Format: mongodb://hostname:port
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
+
+    # Ensure MongoDB starts before Mongo Express.
+    depends_on:
+      - mongodb
+
+# ==============================================================================
+# Volumes Configuration
+# ==============================================================================
+# Named volumes are defined here and can be referenced by any service above.
+# Uncomment this section to enable data persistence for MongoDB.
+# volumes:
+#   mongodb-data:
+#     # Use the "local" driver, which stores data on the host's filesystem.
+#     # The actual location is managed by Docker (usually /var/lib/docker/volumes/).
+#     driver: local
+
+# ==============================================================================
+# Notes
+# ==============================================================================
+# 1. SECURITY: This configuration uses hardcoded credentials for simplicity.
+#    In production, use:
+#    - Docker secrets (for Docker Swarm)
+#    - .env files with .gitignore (for simple setups)
+#    - Cloud provider secret managers (AWS Secrets Manager, GCP Secret Manager)
+#
+# 2. NETWORKING: Docker Compose automatically creates a default network for
+#    all services. Containers can communicate using service names as hostnames.
+#
+# 3. DATA PERSISTENCE: Uncomment the volumes sections to persist MongoDB data.
+#    Without volumes, all data is lost when containers are removed.
+#
+# 4. MONGO EXPRESS IN PRODUCTION: Consider removing Mongo Express in production
+#    or restricting access with firewall rules, as it exposes database access.
+#
+# 5. LOGGING: To view logs for a specific service:
+#    - docker compose -f docker-compose-prod.yaml logs <service-name>
+#    - docker compose -f docker-compose-prod.yaml logs -f (follow mode)
+# ==============================================================================
